@@ -56,14 +56,14 @@
               ><img src="images/pic11.jpg" alt=""
             /></span>
             <p>
-              A* as compared to any other algorithm in its family, like Best
-              first search and Dijkstra, expands as few nodes as possible and
-              still returns the shortest possible route to the goal. This is
-              even better when we introduce heaps into the A* algorithm to
-              reduce the time complexity of finding the node with minimum F
-              value to O(1), the construction however take O(LogN) and is done N
-              times so total complexity of O(NLogN). N is the F distance between
-              the start and the goal node.
+              A* as compared to any other greedy algorithm in its family, like
+              Best first search and Dijkstra, expands as few nodes as possible
+              and still returns the shortest possible route to the goal. This is
+              even better when we introduce heaps into the A* algorithm for
+              finding the highest priority node. This reduces the time
+              complexity of finding the node with minimum F value to O(1), the
+              construction of this heap however take O(LogN) and is done at
+              worst N times so total complexity of O(NLogN).
             </p>
             <p>
               On top of being greedy, A* makes use of manhattan distance in this
@@ -75,19 +75,11 @@
               that has the least cost possible.
             </p>
             <p>
-              BFS and dijkstra were not used sice they expand nodes in all
-              direction to give the shortest path. BFS does not account for the
-              cost of the path and dijkstra, even though gives the best possible
-              route, is blind and expands all neighbors around it. A* on the
-              other hand makes use of the cost and heuristic distance to be as
-              optimal as possible.
-            </p>
-            <p>
-              Ship.cpp The rotation is implement using a RInterpTo function that
-              takes in the current rotation, heading, delta time and speed.
-              Using Heading which is simple the direction vector from our
-              current location to the next checkpoint on the path, we can find
-              the rotation of the vector and use it to rotate the ship smoothly.
+              BFS and dijkstra expand nodes in all direction to give the
+              shortest path. BFS does not account for the cost of the path and
+              dijkstra, even though gives the best possible route, is blind and
+              expands all neighbors around it. A* on the other hand makes use of
+              the cost and heuristic distance to be as optimal as possible.
             </p>
           </div>
         </section>
