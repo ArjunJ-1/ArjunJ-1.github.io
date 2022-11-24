@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<!--
+	Forty by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+  <head>
+    <title>Generic - Forty by HTML5 UP</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=no"
+    />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <noscript
+      ><link rel="stylesheet" href="assets/css/noscript.css"
+    /></noscript>
+  </head>
+  <body class="is-preload">
+    <!-- Wrapper -->
+    <div id="wrapper">
+      <!-- Header -->
+      <header id="header">
+        <a href="index.html" class="logo"
+          ><strong>Arjun Jain</strong> <span>Portfolio</span></a
+        >
+        <nav>
+          <a href="#menu">Menu</a>
+        </nav>
+      </header>
+
+      <!-- Menu -->
+      <nav id="menu">
+        <ul class="links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="landing.html">Landing</a></li>
+          <li><a href="generic.html">Generic</a></li>
+          <li><a href="elements.html">Elements</a></li>
+        </ul>
+        <ul class="actions stacked">
+          <li><a href="#" class="button primary fit">Get Started</a></li>
+          <li><a href="#" class="button fit">Log In</a></li>
+        </ul>
+      </nav>
+
+      <!-- Main -->
+      <div id="main" class="alt">
+        <!-- One -->
+        <section id="one">
+          <div class="inner">
+            <header class="major">
+              <h1>Multi-Species Boids For Document Clustering</h1>
+            </header>
+            <span class="image main"
+              ><img src="images/Swarm intelligence.png" alt=""
+            /></span>
+            <p>
+              For some background information on Reynold's Boids algorithm
+              please look at
+              <a href="Evolving Boids.html"
+                >Reynolds Flocking Simulation with Evolution</a
+              >
+              and <a href="Genetic Algorithm.html">Genetic Algorithm</a>
+            </p>
+            <p>
+              Swarm intelligence is used in many different field of studies not
+              only for simulation purposes but also to solve NP-Hard problems
+              sub-optimally. One such example can be found in this beautifully
+              explained video by
+              <a href="https://www.youtube.com/watch?v=X-iSQQgOd1A"
+                >Sebastian Lague</a
+              >
+              in which he solves the traveling salesman problem using ant swarm
+              intelligence. Another example to showcase the brilliance of swarm
+              intelligence for solving NP-Hard problems is using Reynold's
+              flocking boids simulation to solve document clustering problem.
+            </p>
+            <p>
+              Document clustering involves the use of descriptors to represent
+              the contents of the document within the cluster. The descriptors
+              are then used to calculate the similarity between the documents.
+              The similarity between the documents is then used to group the
+              documents into clusters. Document clustering is used is many
+              different applications involving gathering of similar data for
+              example getting similar articles relating to a query. The
+              algorithm used to solve the document clustering problem is called
+              the K-Means clustering algorithm. The algorithm takes an iterative
+              approach that starts with a random set of clusters and then
+              iteratively moves the clusters to the center of the documents in
+              the cluster. The algorithm stops when the clusters stop moving. A
+              downside of this algorithm is that it is NP-Hard even though it is
+              complete. This means that for a large enough dataset the algorithm
+              will take an enormous amount of time.
+            </p>
+            <p>
+              This
+              <a
+                href="https://www.sciencedirect.com/science/article/abs/pii/S0167739X12001707"
+                >Paper</a
+              >
+              by Xiaohui Cui, Jesse St. Charles and Thomas Potok explores the
+              idea of utilizing GPU parallelism and boids simulation to solve
+              the document clustering problem. The paper proposes a new
+              algorithm called the Multi-Species Flocking (MSF) algorithm
+              however, since the algorithm is O(n^2), GPU parallelism is used to
+              make the algorithm run a lot faster.
+            </p>
+            <p>
+              The base code for boids is done in Unity by Sebastian Lague and
+              explained well in this
+              <a href="https://www.youtube.com/watch?v=bqtqltqcQhw&t=162s"
+                >Video</a
+              >. I added the code for the Multi-Species Flocking algorithm by
+              assigning a type to each boid in real time. The type is assigned
+              based on the number of clusters. The boids are then grouped into
+              clusters based on the type of the boid. Different types are
+              represented using different colors. In addition to the MSF I also
+              added CPU level parallelism using unity's job system to get extra
+              performance.
+            </p>
+            <p>
+              <img src="images/Boid Manager.png" alt="" />
+            </p>
+            <p>
+              The number of clusters can be changed in real time using the boid
+              manager in the Scene. The algorithm currently lacks target cluster
+              points which causes the boids to move in random directions.
+            </p>
+            <p>
+              <img src="images/MSB.gif" alt="" data-position="center center" />
+            </p>
+
+            <!-- Compute Shader -->
+            <h3>Compute Shader</h3>
+            <pre><code>
+#pragma kernel CSMain
+static const int threadGroupSize = 1024;
+
+struct Boid {
+    float3 position;
+    float3 direction;
+
+    float3 flockHeading;
+    float3 flockCentre;
+    float3 separationHeading;
+    int numFlockmates;
+
+    int boidType;
+};
+
+RWStructuredBuffer(Boid) boids;
+int numBoids;
+float viewRadius;
+float avoidRadius;
+
+[numthreads(threadGroupSize,1,1)]
+/* id of the boid we are looking at which loops over all the other boids
+ * check the distance between boids and check the type, only update the boids flocks if they are of the same type
+ * and the distance is less then the view radius.
+ * if the boid we are looking at is of a different type than the boid we are comparing with then add to the seperation force
+ * this allows boids of different types to never flock with each other.
+ */
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    for (int indexB = 0; indexB < numBoids; indexB ++) {
+        if (id.x != indexB) {
+            Boid boidB = boids[indexB];
+            float3 offset = boidB.position - boids[id.x].position;
+            float sqrDst = offset.x * offset.x + offset.y * offset.y + offset.z * offset.z;
+
+            if (sqrDst < viewRadius * viewRadius && boids[id.x].boidType == boidB.boidType) {
+                boids[id.x].numFlockmates += 1;
+                boids[id.x].flockHeading += boidB.direction;
+                boids[id.x].flockCentre += boidB.position;
+
+                if (sqrDst < avoidRadius * avoidRadius) {
+                    boids[id.x].separationHeading -= offset / sqrDst;
+                }
+            }
+            if(sqrDst < viewRadius * viewRadius && boids[id.x].boidType != boidB.boidType)
+                boids[id.x].separationHeading -= offset / sqrDst;
+        }
+    }
+}
+</code></pre>
+
+            <!-- Unity Jobs  -->
+            <h3>Unity Jobs to update boids</h3>
+            <pre><code>
+[BurstCompile]
+public struct BoidUpdateJob : IJobParallelFor
+{
+    public NativeArray(float3) position;
+    public NativeArray(float3) forward;
+    public NativeArray(float3) velocity;
+    public NativeArray(float3) acceleration;
+    public NativeArray(float3) avgFlockHeading;
+    public NativeArray(float3) avgAvoidanceHeading;
+    public NativeArray(float3) centreOfFlockmates;
+    public NativeArray(int) numPerceivedFlockmates;
+    [ReadOnly] public float deltaTime;
+
+    public void Execute(int i)
+    {
+        acceleration[i] = float3.zero;
+
+        if (numPerceivedFlockmates[i] != 0)
+        {
+            centreOfFlockmates[i] /= numPerceivedFlockmates[i];
+
+            float3 offsetToFlockmatesCentre = (centreOfFlockmates[i] - position[i]);
+
+            var alignmentForce = SteerTowards(avgFlockHeading[i], velocity[i]) * 2f;
+            var cohesionForce = SteerTowards(offsetToFlockmatesCentre, velocity[i]) * 1f;
+            var seperationForce = SteerTowards(avgAvoidanceHeading[i], velocity[i]) * 2.5f;
+
+            acceleration[i] += (float3) alignmentForce;
+            acceleration[i] += (float3) cohesionForce;
+            acceleration[i] += (float3) seperationForce;
+        }
+
+        velocity[i] += acceleration[i] * deltaTime;
+        float x = velocity[i].x;
+        float y = velocity[i].y;
+        float z = velocity[i].z;
+        float speed = Mathf.Sqrt((x * x) + (y * y) + (z * z));
+        float3 dir = velocity[i] / speed;
+        speed = Mathf.Clamp(speed, 5, 8);
+        velocity[i] = dir * speed;
+
+        position[i] += velocity[i] * deltaTime;
+        forward[i] = dir;
+    }
+
+    float3 SteerTowards(Vector3 vector, Vector3 vel)
+    {
+        Vector3 v = vector.normalized * 8 - vel;
+        return Vector3.ClampMagnitude(v, 8);
+    }
+}
+</code></pre>
+          </div>
+        </section>
+      </div>
+
+      <!-- Contact -->
+      <section id="contact">
+        <div class="inner">
+          <section>
+            <form
+              method="post"
+              action="https://formsubmit.co/ar.jain0000@gmail.com"
+            >
+              <div class="fields">
+                <div class="field half">
+                  <label for="name">Name</label>
+                  <input type="text" name="name" id="name" />
+                </div>
+                <div class="field half">
+                  <label for="email">Email</label>
+                  <input type="text" name="email" id="email" />
+                </div>
+                <div class="field">
+                  <label for="message">Message</label>
+                  <textarea name="message" id="message" rows="6"></textarea>
+                </div>
+              </div>
+              <ul class="actions">
+                <li>
+                  <input type="submit" value="Send Message" class="primary" />
+                </li>
+                <li><input type="reset" value="Clear" /></li>
+              </ul>
+            </form>
+          </section>
+          <section class="split">
+            <section>
+              <div class="contact-method">
+                <span class="icon solid alt fa-envelope"></span>
+                <h3>Email</h3>
+                <a href="#">ar.jain0000@gmail.com</a>
+              </div>
+            </section>
+            <section>
+              <div class="contact-method">
+                <span class="icon solid alt fa-phone"></span>
+                <h3>Phone</h3>
+                <span>+61406304406</span>
+              </div>
+            </section>
+            <section>
+              <div class="inner">
+                <ul class="icons">
+                  <li>
+                    <a
+                      href="https://github.com/ArjunJ-1"
+                      class="icon brands alt fa-github"
+                      ><span class="label">GitHub</span></a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://www.linkedin.com/in/arjun-j-4a165a130/"
+                      class="icon brands alt fa-linkedin"
+                      ><span class="label">LinkedIn</span></a
+                    >
+                  </li>
+                </ul>
+              </div>
+            </section>
+          </section>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer id="footer">
+        <div class="inner">
+          <ul class="copyright">
+            <li>&copy; Untitled</li>
+            <li>Design: <a href="https://html5up.net">HTML5 UP</a></li>
+          </ul>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/jquery.scrolly.min.js"></script>
+    <script src="assets/js/jquery.scrollex.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+  </body>
+</html>

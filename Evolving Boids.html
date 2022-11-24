@@ -50,7 +50,7 @@
         <section id="one">
           <div class="inner">
             <header class="major">
-              <h1>Renyolds Flocking Simulation with Evolution</h1>
+              <h1>Reynolds Flocking Simulation with Evolution</h1>
             </header>
             <span class="image main"
               ><img src="images/Boids.png" alt=""
@@ -62,7 +62,7 @@
             </p>
             <p>
               Having experimented with genetic algorithms, I wanted to apply
-              them to the Renyold's flocking simulation. The simulation is a
+              them to the Reynold's flocking simulation. The simulation is a
               simple one, where a group of boids (birds) are trying to reach a
               target. The boids have a few simple rules that they follow:
               <li>They try to stay close to each other (cohesion)</li>
@@ -77,7 +77,7 @@
               Each of these rules has a weight associated with it and are
               applied using 3D vectors. These weights will act as the DNA of the
               boids. The weights will be randomly generated and then the boids
-              will be tested. The test score will be finalised by a fitness
+              will be tested. The test score will be finalized by a fitness
               function. The boids with the best fitness will be selected to
               breed. The DNA (weights) of the boids will be crossed over and
               mutated to create the next generation of boids. This process will
@@ -88,23 +88,23 @@
               described in the genetic algorithm project. The boids themselves
               have collision avoidance steering, alignment steering, cohesion
               steering and separation steering. The flight path of each boid
-              addes all the steering vectors together to get a final steering
+              adds all the steering vectors together to get a final steering
               vector.
             </p>
             <p>
-              The fitness score is lowered everytime a boid collides with
-              another boid and dies off. Now this should have wroked perfectly
-              but in genetic algortims there are alwasy nuances that are
-              realised later in the code. In this case simply have a negative
+              The fitness score is lowered every time a boid collides with
+              another boid and dies off. Now this should have worked perfectly
+              but in genetic algorithms there are always nuances that are
+              realized later in the code. In this case simply have a negative
               fitness for the boids will make them evolve into a group of boids
               that will never collide... Effectively making them NOT boids. This
               is because the boids will always try to avoid each other which can
-              be done by having high seperation weight. The solution to this is
-              to have positive feedback/fitness based on the number of
-              neighbours a boid has and extra fitness for successfully reaching
-              the target threshold. This will make the boids evolve to a point
-              where they will evade other boids but also stay as a group. This
-              is the final result of the simulation.
+              be done by having high separation weight. The solution to this is
+              to have positive feedback/fitness based on the number of neighbors
+              a boid has and extra fitness for successfully reaching the target
+              threshold. This will make the boids evolve to a point where they
+              will evade other boids but also stay as a group. This is the final
+              result of the simulation.
             </p>
             <p>
               <img src="images/Evolving Boids.gif" alt="" />
