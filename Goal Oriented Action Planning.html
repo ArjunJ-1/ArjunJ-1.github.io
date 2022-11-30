@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<!--
+	Forty by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+  <head>
+    <title>Generic - Forty by HTML5 UP</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=no"
+    />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <noscript
+      ><link rel="stylesheet" href="assets/css/noscript.css"
+    /></noscript>
+  </head>
+  <body class="is-preload">
+    <!-- Wrapper -->
+    <div id="wrapper">
+      <!-- Header -->
+      <header id="header">
+        <a href="index.html" class="logo"
+          ><strong>Arjun Jain</strong> <span>Portfolio</span></a
+        >
+        <nav>
+          <a href="#menu">Menu</a>
+        </nav>
+      </header>
+
+      <!-- Menu -->
+      <nav id="menu">
+        <ul class="links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="landing.html">Landing</a></li>
+          <li><a href="generic.html">Generic</a></li>
+          <li><a href="elements.html">Elements</a></li>
+        </ul>
+        <ul class="actions stacked">
+          <li><a href="#" class="button primary fit">Get Started</a></li>
+          <li><a href="#" class="button fit">Log In</a></li>
+        </ul>
+      </nav>
+
+      <!-- Main -->
+      <div id="main" class="alt">
+        <!-- One -->
+        <section id="one">
+          <div class="inner">
+            <header class="major">
+              <h1>Goal Oriented Action Planning</h1>
+            </header>
+            <span class="image main"
+              ><img src="images/planning.png" alt=""
+            /></span>
+            <p>
+              First introduced in 2004 by Jeff Orkin and developed for the game
+              F.E.A.R, goal oriented action planning starts with the list of
+              goals with fixed priority, a function that validates the goal i.e
+              (should the goal be pursued) and the desired world state that the
+              AI is trying to achieve. Next we have a list of actions for the AI
+              for e.g. Melee Attack, Ranged Attack, Move to a location, etc. The
+              list also contains the world state it will achieve after the
+              action is performed, the world state required to perform that
+              action and a validation check to ensure the action can be
+              performed to reach the desired world state.
+            </p>
+            <p>
+              <img
+                src="images/Goal and Actions.png"
+                alt=""
+                width="645"
+                height="335"
+              />
+            </p>
+            <p>
+              To build a plan the AI needs a valid goal, an action that
+              satisfies the goal, an action that satisfies the preconditions of
+              the previous action and so on until the current world state is
+              matched. The AI will use a path-finding algorithm to find the
+              shortest path to the goal and then execute the actions in the
+              plan. This
+              <a href="https://www.youtube.com/watch?v=gm7K68663rA">Video</a>
+              from GDC dives a lot deeper into GOAP.
+            </p>
+            <p>
+              This project includes a simple GOAP implementation in Unreal
+              Engine 4. The AI is the ship that creates a plan to gather
+              resources (Brown, Yellow, Pink, Grey) and deliver them to the base
+              (white). GOAP Planner is used in relation with the state machine
+              and uses path-finding algorithm to search for the best plan by
+              relaxing the preconditions set upon the actions that the ship need
+              to perform. Action is performed to relax the precondition and get
+              closer to the goal state. The current implementation of GOAP is
+              using a BFS search that is known for it's exponential time space
+              complexity however in this case, since the branching factor is
+              small, the algorithm is still considered efficient. As the ship
+              moves it unreserves the path before it as it won't be used
+              anymore. If there is a spot on the path that is reserved by more
+              than one ship, the algorithm checks for the ship that will finish
+              its path quickly and priorities its movement while all the other
+              ship replan their path or wait for the priority ship to pass
+              through. This type of planning is referred to as reactive planning
+              strategy based on minimum communication policy (MCP).
+            </p>
+            <p>
+              <img src="images/GOAP.gif" alt="" />
+            </p>
+            <p>No collision avoidance at the base (white).</p>
+
+            <!-- State Machine -->
+            <h3>State Machine</h3>
+            <pre><code>
+#pragma once
+/*----------------------------------------------------------------------------*/
+/* Copyright (c) 2008 John Downey (jtdowney@purdue.edu)                       */
+/*                                                                            */
+/* Permission is hereby granted, free of charge, to any person obtaining a    */
+/* copy of this software and associated documentation files (the "Software"), */
+/* to deal in the Software without restriction, including without limitation  */
+/* the rights to use, copy, modify, merge, publish, distribute, sublicense,   */
+/* and/or sell copies of the Software, and to permit persons to whom the      */
+/* Software is furnished to do so, subject to the following conditions:       */
+/*                                                                            */
+/* The above copyright notice and this permission notice shall be included in */
+/* all copies or substantial portions of the Software.                        */
+/*                                                                            */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR */
+/* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,   */
+/* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL    */
+/* THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER */
+/* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING    */
+/* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER        */
+/* DEALINGS IN THE SOFTWARE.                                                  */
+/*----------------------------------------------------------------------------*/
+
+// Modified by Jason Haasz for Monash University
+
+// A template/generic programming based approach to a statemachine.
+
+#include (map)
+
+// E - a user defined enum/index for a unique state
+// T - the class that owns the state machine.
+
+template(class E, class T)
+class StateMachine
+{
+public:
+	typedef void (T::*CallbackOnEnter)();
+	typedef void (T::*CallbackOnTick)(float);
+	typedef void (T::*CallbackOnExit)();
+
+private:
+
+	T* m_pOwner;
+	E m_currentState;
+
+	std::map(E, CallbackOnTick) m_statesOnTick;
+	std::map(E, CallbackOnEnter) m_statesOnEnter;
+	std::map(E, CallbackOnExit) m_statesOnExit;
+
+public:
+	StateMachine(T* pOwner, E emptyState)
+	{
+		m_currentState = emptyState;
+		m_pOwner = pOwner;
+	}
+
+	~StateMachine()
+	{
+	}
+
+	void RegisterState(E state, CallbackOnEnter callbackEntry, CallbackOnTick callbackTick, CallbackOnExit callbackExit)
+	{
+		m_statesOnEnter[state] = callbackEntry;
+		m_statesOnTick[state] = callbackTick;
+		m_statesOnExit[state] = callbackExit;
+	}
+
+	E GetCurrentState(void)
+	{
+		return m_currentState;
+	}
+
+	void ChangeState(E statenext)
+	{
+		if (m_pOwner)
+		{
+			CallbackOnExit callbackExit = m_statesOnExit[m_currentState];
+			if (callbackExit)
+			{
+				// Exit old state
+				(m_pOwner->*callbackExit)();
+			}
+		}
+
+		m_currentState = statenext;
+
+		if (m_pOwner)
+		{
+			CallbackOnEnter callbackEnter = m_statesOnEnter[m_currentState];
+			if (callbackEnter)
+			{
+				// Enter new state
+				(m_pOwner->*callbackEnter)();
+			}
+		}
+	}
+
+	//Update Current State
+	void Tick(float fTimeStep)
+	{
+		if (m_pOwner)
+		{
+			CallbackOnTick callback = m_statesOnTick[m_currentState];
+			if (callback)
+			{
+				(m_pOwner->*callback)(fTimeStep);
+			}
+		}
+	}
+
+};
+</code></pre>
+            <!-- Add actions -->
+            <h3>Adding Transitioning States</h3>
+            <pre><code>
+// Sets default values
+AShip::AShip()
+{
+ 	// Set this actor to call Tick() every frame.
+	PrimaryActorTick.bCanEverTick = true;
+	MoveSpeed = 200;
+	Tolerance = 10;
+
+	ActionStateMachine = new StateMachine(ACTOR_STATES, AShip)(this, State_Nothing);
+	ActionStateMachine->RegisterState(State_Idle, &AShip::OnIdleEnter, &AShip::OnIdleTick, &AShip::OnIdleExit);
+	ActionStateMachine->RegisterState(State_Move, &AShip::OnMoveEnter, &AShip::OnMoveTick, &AShip::OnMoveExit);
+	ActionStateMachine->RegisterState(State_Action, &AShip::OnActionEnter, &AShip::OnActionTick, &AShip::OnActionExit);
+	ActionStateMachine->ChangeState(State_Idle);
+
+	MaxIdleTime = 3;
+	CurrentIdleTime = 0;
+	
+	// Start with the action of collecting gold
+	CollectTreasureAction* TreasureAction = new CollectTreasureAction();
+	TreasureAction->AddPrecondition("HasMorale", false);
+	TreasureAction->AddEffect("HasMorale", true);
+	AvailableActions.Add(TreasureAction);
+
+	// Decrease Rum for each action performed. Each ship starts with 75 rum
+	NumRum = 75;
+}
+</code></pre>
+          </div>
+        </section>
+      </div>
+
+      <!-- Contact -->
+      <section id="contact">
+        <div class="inner">
+          <section>
+            <form
+              method="post"
+              action="https://formsubmit.co/ar.jain0000@gmail.com"
+            >
+              <div class="fields">
+                <div class="field half">
+                  <label for="name">Name</label>
+                  <input type="text" name="name" id="name" />
+                </div>
+                <div class="field half">
+                  <label for="email">Email</label>
+                  <input type="text" name="email" id="email" />
+                </div>
+                <div class="field">
+                  <label for="message">Message</label>
+                  <textarea name="message" id="message" rows="6"></textarea>
+                </div>
+              </div>
+              <ul class="actions">
+                <li>
+                  <input type="submit" value="Send Message" class="primary" />
+                </li>
+                <li><input type="reset" value="Clear" /></li>
+              </ul>
+            </form>
+          </section>
+          <section class="split">
+            <section>
+              <div class="contact-method">
+                <span class="icon solid alt fa-envelope"></span>
+                <h3>Email</h3>
+                <a href="#">ar.jain0000@gmail.com</a>
+              </div>
+            </section>
+            <section>
+              <div class="contact-method">
+                <span class="icon solid alt fa-phone"></span>
+                <h3>Phone</h3>
+                <span>+61406304406</span>
+              </div>
+            </section>
+            <section>
+              <div class="inner">
+                <ul class="icons">
+                  <li>
+                    <a
+                      href="https://github.com/ArjunJ-1"
+                      class="icon brands alt fa-github"
+                      ><span class="label">GitHub</span></a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="https://www.linkedin.com/in/arjun-j-4a165a130/"
+                      class="icon brands alt fa-linkedin"
+                      ><span class="label">LinkedIn</span></a
+                    >
+                  </li>
+                </ul>
+              </div>
+            </section>
+          </section>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer id="footer">
+        <div class="inner">
+          <ul class="copyright">
+            <li>&copy; Untitled</li>
+            <li>Design: <a href="https://html5up.net">HTML5 UP</a></li>
+          </ul>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/jquery.scrolly.min.js"></script>
+    <script src="assets/js/jquery.scrollex.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+  </body>
+</html>
